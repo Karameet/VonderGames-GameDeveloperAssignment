@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b6ce7d6355588742949ecc34c585be5, type: 3}
+  m_Name: DialogueData
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  lines:
+  - speaker: NPC
+    message: Hey, you. Can you help me for a moment?
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 7294123212156950755, guid: 2be553a36f18fe74b8ea39993df1b50f, type: 3}
+  - speaker: Player
+    message: What do you need?
+    leftPortrait: {fileID: 5299954157652599775, guid: c20eb8b24224acf44b6c0216ad23214c, type: 3}
+    rightPortrait: {fileID: 0}
+  - speaker: NPC
+    message: 'That object over there is mine. Please bring it
+
+      back to me.'
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 7294123212156950755, guid: 2be553a36f18fe74b8ea39993df1b50f, type: 3}

@@ -10,20 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b6ce7d6355588742949ecc34c585be5, type: 3}
-  m_Name: DialogueData
+  m_Name: Delivery
   m_EditorClassIdentifier: Assembly-CSharp::DialogueData
   lines:
-  - speaker: NPC
-    message: Hey, you. Can you help me for a moment?
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 7294123212156950755, guid: 2be553a36f18fe74b8ea39993df1b50f, type: 3}
   - speaker: Player
-    message: What do you need?
+    message: Is this what you were looking for?
     leftPortrait: {fileID: 5299954157652599775, guid: c20eb8b24224acf44b6c0216ad23214c, type: 3}
     rightPortrait: {fileID: 0}
   - speaker: NPC
-    message: 'That object over there is mine. Please bring it
-
-      back to me.'
+    message: Yes. Thank you.
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 7294123212156950755, guid: 2be553a36f18fe74b8ea39993df1b50f, type: 3}
+  - speaker: NPC
+    message: My work here is done.
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 7294123212156950755, guid: 2be553a36f18fe74b8ea39993df1b50f, type: 3}
+  - speaker: NPC
+    message: Goodbye.
     leftPortrait: {fileID: 0}
     rightPortrait: {fileID: 7294123212156950755, guid: 2be553a36f18fe74b8ea39993df1b50f, type: 3}

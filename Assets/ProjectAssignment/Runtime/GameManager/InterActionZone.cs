@@ -8,10 +8,17 @@ public class InterActionZone : MonoBehaviour
 {
     [SerializeField] GameObject showButtonInterAction;
 
-    private event Action onInteract;
+    [Header("Audio")]
+    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioClip interactClip;
+
+    public event Action OnInteraction;
 
     private InputAction interactAction;
     [SerializeField] private bool playerInRange;
+
+    public bool PlayerInRange => playerInRange;
+    public Transform Player { get; private set; }
 
     private void Awake()
     {
@@ -43,6 +50,7 @@ public class InterActionZone : MonoBehaviour
             return;
 
         playerInRange = true;
+        Player = other.transform;
 
         if (showButtonInterAction != null)
             showButtonInterAction.SetActive(true);
@@ -55,6 +63,7 @@ public class InterActionZone : MonoBehaviour
             return;
 
         playerInRange = false;
+        Player = null;
 
         if (showButtonInterAction != null)
             showButtonInterAction.SetActive(false);
@@ -70,7 +79,13 @@ public class InterActionZone : MonoBehaviour
 
     private void Interact()
     {
-        onInteract?.Invoke();
-        gameObject.SetActive(false);
+        PlayInteractSound();
+        OnInteraction?.Invoke();
+    }
+
+    private void PlayInteractSound()
+    {
+        if (sfxSource != null && interactClip != null)
+            sfxSource.PlayOneShot(interactClip);
     }
 }

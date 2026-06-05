@@ -12,13 +12,15 @@ public class DialoguePanel : MonoBehaviour
     [SerializeField] private Button overlayButton;
 
     [Header("Slide Animation")]
-    [Tooltip("The RectTransform that slides in/out (usually the dialogue box itself).")]
     [SerializeField] private RectTransform slideTarget;
     [SerializeField] private float slideDuration = 0.4f;
-    [Tooltip("Vertical offset from the shown position used as the hidden (off-screen) position. Negative = below.")]
     [SerializeField] private float hiddenOffsetY = -600f;
     [SerializeField] private Ease showEase = Ease.OutCubic;
     [SerializeField] private Ease hideEase = Ease.InCubic;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioClip newLineClip;
 
     private DialogueLine[] lines;
     private int currentIndex;
@@ -27,6 +29,8 @@ public class DialoguePanel : MonoBehaviour
     private Vector2 shownPosition;
     private Vector2 hiddenPosition;
     private Tween slideTween;
+
+    public event Action<string> OnChangeSpeaker;
 
     private void Awake()
     {
@@ -112,6 +116,7 @@ public class DialoguePanel : MonoBehaviour
             {
                 root.SetActive(false);
                 OnDialogueFinished?.Invoke();
+                OnChangeSpeaker?.Invoke(string.Empty);
             });
     }
 
@@ -120,6 +125,14 @@ public class DialoguePanel : MonoBehaviour
         DialogueLine line = lines[index];
         dialogueBox.SetPortraits(line.leftPortrait, line.rightPortrait);
         dialogueBox.ShowDialogue(line.speaker, line.message);
+        OnChangeSpeaker?.Invoke(line.speaker);
+        PlayNewLineSound();
+    }
+
+    private void PlayNewLineSound()
+    {
+        if (sfxSource != null && newLineClip != null)
+            sfxSource.PlayOneShot(newLineClip);
     }
 
     private void HandleTypingComplete()

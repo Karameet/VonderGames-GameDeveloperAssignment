@@ -1,73 +1,187 @@
+using System;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Playables;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
     [SerializeField] private DialoguePanel dialoguePanel;
+    [SerializeField] private PlayableDirector director; 
 
-    [SerializeField] private DialogueData data;
+    [Header("Steps")]
+    [SerializeField] private Step[] steps;
+    [SerializeField] private DialogueStep[] dialogueSteps;
+    [SerializeField] private TimeLineStep[] timeLineSteps; 
+    [SerializeField] private GameStep currentStep;
 
-    [Tooltip("ปุ่มสำหรับ skip / ไปบรรทัดถัดไป")]
-    [SerializeField] private Button nextButton;
+    private string currentSpeaker;
 
-    [Header("Test")]
-    [Tooltip("เล่น dialogue ทดสอบทันทีตอนเริ่มเกม")]
-    [SerializeField] private bool playTestOnStart = true;
+    public GameStep CurrentStep => currentStep;
+    public string CurrentSpeaker => currentSpeaker;
+    public static int StepCount => Enum.GetValues(typeof(GameStep)).Length;
+
+    public event Action<GameStep> OnStepChanged;
+    public event Action<string> OnCurrentSpeaker;
 
     private void Awake()
     {
         if (Instance == null)
             Instance = this;
+
+        steps = new Step[StepCount];
+        for (int i = 0; i < steps.Length; i++)
+            steps[i] = new Step((GameStep)i);
+
+        ConfigureSteps();
+    }
+
+    private void ConfigureSteps()
+    {
+        var firstTalkStep = GetStep(GameStep.FirstTalk);
+        firstTalkStep.onEnter = () => Debug.Log($"{nameof(GameManager)}: FirstTalk");
+        firstTalkStep.onPlay = () =>
+        {
+            dialoguePanel.Show(dialogueSteps.FirstOrDefault(data => data.step == firstTalkStep.step).dialogueData);
+            dialoguePanel.OnDialogueFinished += NextStep;
+        };
+
+
+        var itemFocus = GetStep(GameStep.ItemFocus);
+        itemFocus.onEnter = () => { 
+            Debug.Log($"{nameof(GameManager)}: ItemFocus");         
+            director.Play(timeLineSteps.FirstOrDefault(data => data.step == itemFocus.step).clip);           
+        } ;
+
+        var delivery = GetStep(GameStep.Delivery);
+        delivery.onEnter = () => Debug.Log($"{nameof(GameManager)}: Delivery");
+        delivery.onPlay = () =>
+        {
+            dialoguePanel.Show(dialogueSteps.FirstOrDefault(data => data.step == delivery.step).dialogueData);
+            dialoguePanel.OnDialogueFinished += NextStep;
+        };
+
+
+        var endEvent = GetStep(GameStep.EndEvent);
+        endEvent.onEnter = () => { 
+            Debug.Log($"{nameof(GameManager)}: EndEvent");
+            director.Play(timeLineSteps.FirstOrDefault(data => data.step == endEvent.step).clip);
+        };
+
     }
 
     private void Start()
     {
-        if (playTestOnStart)
-            PlayTestDialogue();
+        EnterStep((GameStep)0);
     }
-
     private void OnEnable()
     {
-        if (nextButton != null)
-            nextButton.onClick.AddListener(OnNextButtonClicked);
+        dialoguePanel.OnChangeSpeaker += OnSpeakerChange;
     }
 
     private void OnDisable()
     {
-        if (nextButton != null)
-            nextButton.onClick.RemoveListener(OnNextButtonClicked);
+        dialoguePanel.OnChangeSpeaker -= OnSpeakerChange;
     }
 
-    // กดปุ่มเพื่อ skip ถ้ายังพิมพ์ไม่จบ หรือไปบรรทัดถัดไป
-    private void OnNextButtonClicked()
+    public void NextStep()
     {
-        if (dialoguePanel != null && dialoguePanel.IsPlaying)
-            dialoguePanel.Advance();
-    }
+        int next = (int)currentStep + 1;
 
-    /// <summary>
-    /// เล่น dialogue ทดสอบ — ใช้ data ที่ลากใส่ใน Inspector ถ้ามี
-    /// ไม่งั้นสร้างชุดทดสอบขึ้นมาใน code
-    /// </summary>
-    public void PlayTestDialogue()
-    {
-        if (dialoguePanel == null)
+        if (next >= StepCount)
         {
-            Debug.LogWarning($"{nameof(GameManager)}: ยังไม่ได้ตั้งค่า dialoguePanel");
+            Debug.Log($"{nameof(GameManager)}: Complete");
             return;
         }
 
-        DialogueData dialogueToPlay = data;
+        var stepData = GetStep(currentStep);
+        if (stepData != null)
+        {
+            stepData.onExit?.Invoke();
+        }
 
-        dialoguePanel.OnDialogueFinished -= HandleDialogueFinished;
-        dialoguePanel.OnDialogueFinished += HandleDialogueFinished;
-        dialoguePanel.Show(dialogueToPlay);
+        EnterStep((GameStep)next);
     }
 
-    private void HandleDialogueFinished()
+    public void EnterStep(GameStep step)
     {
-        Debug.Log($"{nameof(GameManager)}: dialogue ทดสอบเล่นจบแล้ว");
+        currentStep = step;
+        OnStepChanged?.Invoke(step);
+
+        var stepData = GetStep(currentStep);
+        if (stepData != null)
+        {
+            stepData.onEnter?.Invoke();
+        }
     }
+
+    private Step GetStep(GameStep step)
+    {
+        foreach (Step s in steps)
+        {
+            if (s.step == step)
+            {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    public void PlayCurrentStep()
+    {
+        PlayStep(currentStep);
+    }
+
+    public void PlayStep(GameStep step)
+    {
+        var stepData = GetStep(step);
+        if (stepData != null)
+        {
+            stepData.onPlay?.Invoke();
+        }
+    }
+
+
+    private void OnSpeakerChange(string speaker)
+    {
+        currentSpeaker = speaker;
+        OnCurrentSpeaker?.Invoke(speaker);
+    }
+}
+
+public enum GameStep
+{
+    FirstTalk,
+    ItemFocus,
+    Delivery,
+    EndEvent
+}
+
+[Serializable]
+public class Step
+{
+    public GameStep step;
+    public Action onEnter;
+    public Action onPlay;
+    public Action onExit;
+
+    public Step(GameStep step)
+    {
+        this.step = step;
+    }
+}
+
+[Serializable]
+public class DialogueStep
+{
+    public GameStep step;
+    public DialogueData dialogueData;
+}
+
+[Serializable]
+public class TimeLineStep
+{
+    public GameStep step;
+    public PlayableAsset clip;
 }

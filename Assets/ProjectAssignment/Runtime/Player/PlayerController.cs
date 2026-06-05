@@ -16,6 +16,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private SpriteRenderer spriteRenderer;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource sfxSource;      
+    [SerializeField] private AudioSource footstepSource; 
+    [SerializeField] private AudioClip jumpClip;
+    [SerializeField] private AudioClip runClip;
+
     private InputAction moveAction;
     private InputAction jumpAction;
     private float moveInput;
@@ -82,6 +88,7 @@ public class PlayerController : MonoBehaviour
         {
             velocity.y = jumpForce;
             isJumping = true;
+            PlayJumpSound();
         }
         jumpRequested = false;
 
@@ -90,7 +97,33 @@ public class PlayerController : MonoBehaviour
 
         rigidbody.linearVelocity = velocity;
 
+        UpdateFootstepSound(grounded);
         CheckAnimation();
+    }
+
+    private void PlayJumpSound()
+    {
+        if (sfxSource != null && jumpClip != null)
+            sfxSource.PlayOneShot(jumpClip);
+    }
+
+    private void UpdateFootstepSound(bool grounded)
+    {
+        if (footstepSource == null || runClip == null)
+            return;
+
+        bool shouldPlay = isMoving && grounded;
+
+        if (shouldPlay && !footstepSource.isPlaying)
+        {
+            footstepSource.clip = runClip;
+            footstepSource.loop = true;
+            footstepSource.Play();
+        }
+        else if (!shouldPlay && footstepSource.isPlaying)
+        {
+            footstepSource.Stop();
+        }
     }
 
     private bool IsGrounded()
